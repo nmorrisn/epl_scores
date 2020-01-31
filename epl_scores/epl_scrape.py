@@ -1,17 +1,11 @@
 # function to scrape EPL scores given a date
 # returns a json object containing matches, teams, scores, and dates
-import datetime
-import json
 import requests
+import datetime
 from bs4 import BeautifulSoup
 
-def scrape(date):
-    date = datetime.datetime.strptime(date_input, '%Y%M%d')
-
-    if date is None:
-        raise ValueError('Invalid date.')
-
-    url = "https://www.espn.com/soccer/fixtures/_/date/" + date_input + "/league/eng.1"
+def scrape(date_str, date):
+    url = "https://www.espn.com/soccer/fixtures/_/date/" + date_str + "/league/eng.1"
     soup = BeautifulSoup(requests.get(url).text, 'lxml')
 
     # First grab the dates from the headers above the schedule tables
@@ -52,10 +46,4 @@ def scrape(date):
             k = 0
         i += 1
         j = 0
-    return json.dumps(match_table)
-
-date_input = input("Enter a date formatted like yyyyMMdd: ")
-
-results = scrape(date_input)
-
-print(results)
+    return match_table
