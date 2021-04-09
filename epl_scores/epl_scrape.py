@@ -3,6 +3,7 @@
 import requests
 import datetime
 from bs4 import BeautifulSoup
+import json
 
 def scrape(date_str, date):
     url = "https://www.espn.com/soccer/fixtures/_/date/" + date_str + "/league/eng.1"
@@ -16,34 +17,33 @@ def scrape(date_str, date):
         schedule_dates['table' + str(table_count)] = header_date.replace(year=date.year).date()
         table_count += 1
 
-    table = []
     match_table = []
     i = 0
     j = 0
-    k = 0
     # Loop through match tables
     for table in soup.find_all('div', class_='responsive-table-wrap'):
         # Loop through table rows
+        match_date = str(schedule_dates['table' + str(i)])
         for row in table.find('tbody').find_all('tr'):
-            # Loop through teams in each row
+            # Create our match dictionary
             match = {}
-            for team in row.find_all('td'):
-                if k == 0:
-                    match["date"] = str(schedule_dates['table' + str(i)])
-                    match["team1_abbr"] = team.abbr.text
-                    match["team1"] = team.span.text
-                    if team.find('span', class_='record').a.text == 'v':
-                        match["score"] = 'n/a'
-                    else:
-                        match["score"] = team.find('span', class_='record').a.text
-                elif k == 1:
-                    match["team2_abbr"] = team.abbr.text
-                    match["team2"] = team.find('a', class_='team-name').span.text
-                k += 1
-            # print("This is table:", i, "row:", j, "team:", k)
+            teams = row.find_all('td')
+
+            # Get team 1 information, based on the current html layout this will be index 0
+            match["date"] = match_date
+            match["team1_abbr"] = teams[0].abbr.text
+            match["team1"] = teams[0].span.text
+            if teams[0].find('span', class_='record').a.text == 'v':
+                match["score"] = 'n/a'
+            else:
+                match["score"] = teams[0].find('span', class_='record').a.text
+            
+            # Get second team information
+            match["team2_abbr"] = teams[1].abbr.text
+            match["team2"] = teams[1].find('a', class_='team-name').span.text
             match_table.append(match)
             j += 1
-            k = 0
         i += 1
         j = 0
-    return match_table
+    
+    return json.dumps(match_table)
